@@ -1,0 +1,8 @@
+# DXF / DWG 处理
+ezdxf>=0.18.9
+
+# ModelScope / OpenAI API
+openai>=1.0.0
+
+# Python 标准库兼容性（无需安装，但列出以说明依赖）
+# json, pathlib, time, re, subprocess, shutil
