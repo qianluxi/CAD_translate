@@ -12,7 +12,7 @@ client = OpenAI(
     api_key="ms-a008e17e-882d-4622-ae01-150918799925"
 )
 
-MODEL_ID = "Qwen/Qwen3-30B-A3B"
+MODEL_ID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
 
 EXTRA_BODY = {
     "enable_thinking": False
