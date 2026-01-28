@@ -27,7 +27,7 @@ INPUT_JSON  = BASE_DIR / "texts.json"
 OUTPUT_JSON = BASE_DIR / "result.json"
 CACHE_JSON  = BASE_DIR / "translation_cache.json"
 
-BATCH_SIZE = 40
+BATCH_SIZE = 200
 SLEEP_TIME = 0.3
 
 # =========================================================
