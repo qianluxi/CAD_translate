@@ -6,7 +6,7 @@ import ezdxf  # pip install ezdxf
 # 配置
 # =============================
 BASE_DIR = Path(__file__).parent
-DXF_FILE = BASE_DIR / "source.dxf"
+DXF_FILE = BASE_DIR / "text_only.dxf"
 OUTPUT_JSON = BASE_DIR / "texts.json"
 
 # =============================

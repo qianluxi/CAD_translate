@@ -3,21 +3,25 @@ import time
 import re
 from pathlib import Path
 from openai import OpenAI
+import os
 
 # =========================================================
 # 1. ModelScope API 配置
 # =========================================================
+API_KEY = os.getenv("MODELSCOPE_API_KEY")
+if not API_KEY:
+    raise ValueError("请设置环境变量 MODELSCOPE_API_KEY，例如 export MODELSCOPE_API_KEY=xxxx")
+
 client = OpenAI(
     base_url="https://api-inference.modelscope.cn/v1",
-    api_key="ms-a008e17e-882d-4622-ae01-150918799925"
+    api_key=API_KEY
 )
 
-MODEL_ID = "Qwen/Qwen3-30B-A3B"
+MODEL_ID = "Qwen/Qwen3-235B-A22B-Instruct-2507"
 
 EXTRA_BODY = {
     "enable_thinking": False
 }
-
 # =========================================================
 # 2. 路径与参数
 # =========================================================
