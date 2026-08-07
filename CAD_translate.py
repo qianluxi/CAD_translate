@@ -1,16 +1,21 @@
 import json
 import time
 import re
+import sys
 from pathlib import Path
 from openai import OpenAI
 import os
 
+# Windows GBK 控制台打印 emoji 会触发 UnicodeEncodeError，这里兜底
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
+
 # =========================================================
 # 1. ModelScope API 配置
 # =========================================================
-API_KEY = os.getenv("MODELSCOPE_API_KEY")
+API_KEY = os.getenv("MODELSCOPE_API_KEY") or os.getenv("MS_API_KEY")
 if not API_KEY:
-    raise ValueError("请设置环境变量 MODELSCOPE_API_KEY，例如 export MODELSCOPE_API_KEY=xxxx")
+    raise ValueError("请设置环境变量 MODELSCOPE_API_KEY 或 MS_API_KEY，例如 export MODELSCOPE_API_KEY=xxxx")
 
 client = OpenAI(
     base_url="https://api-inference.modelscope.cn/v1",
@@ -31,7 +36,7 @@ INPUT_JSON  = BASE_DIR / "texts.json"
 OUTPUT_JSON = BASE_DIR / "result.json"
 CACHE_JSON  = BASE_DIR / "translation_cache.json"
 
-BATCH_SIZE = 40
+BATCH_SIZE = 200
 SLEEP_TIME = 0.3
 
 # =========================================================
@@ -91,10 +96,11 @@ def batch_translate_texts(texts: list[str]) -> dict:
         try:
             idx = int(blocks[i])
             translated = blocks[i + 1].strip()
-            result[texts[idx]] = translated
+            if 0 <= idx < len(texts):
+                result[texts[idx]] = translated
         except Exception:
-            # 防御：模型输出异常时，不让程序炸
-            result[texts[idx]] = texts[idx]
+            # 防御：模型输出异常时，不记录这条结果，交给上层按原文兜底
+            continue
 
     return result
 

@@ -1,54 +1,58 @@
 import json
+import sys
 from pathlib import Path
 import ezdxf  # pip install ezdxf
+
+# Windows GBK 控制台打印 emoji 会触发 UnicodeEncodeError，这里兜底
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
 
 # =============================
 # 配置
 # =============================
 BASE_DIR = Path(__file__).parent
-DXF_FILE = BASE_DIR / "text_only.dxf"
+DXF_FILE = BASE_DIR / "source.dxf"
 OUTPUT_JSON = BASE_DIR / "texts.json"
+
 
 # =============================
 # 提取函数
 # =============================
+def collect_texts(entities, texts):
+    """从一组实体中收集文本，键为原始 DXF handle。"""
+    for e in entities:
+        if e.dxftype() == "TEXT":
+            texts[e.dxf.handle] = e.dxf.text
+        elif e.dxftype() == "MTEXT":
+            # plain_text() 把 DXF 换行符 \P 转成普通 \n，方便大模型理解
+            texts[e.dxf.handle] = e.plain_text()
+        elif e.dxftype() == "INSERT":
+            # ATTRIB 不是独立顶层实体，必须从 insert.attribs 里取
+            for attrib in e.attribs:
+                texts[attrib.dxf.handle] = attrib.dxf.text
+
+
 def extract_texts_from_dxf(dxf_path):
     """
-    提取 DXF 文件中：
-    - MODELSPACE 的 TEXT / MTEXT
-    - BLOCK 定义内部的 TEXT / MTEXT
-    - INSERT 属性 ATTRIB/ATTDEF
-    返回 {唯一handle: 文本} 字典
+    直接读取原始 DXF，提取：
+    - MODELSPACE 的 TEXT / MTEXT / INSERT 属性
+    - 真实 BLOCK 定义内部的 TEXT / MTEXT / INSERT 属性
+
+    跳过 *Model_Space / *Paper_Space 等伪块，避免模型空间文本被重复提取。
+    返回 {handle: 文本} 字典，handle 即原始 DXF 的 handle，回写时直接对应。
     """
     doc = ezdxf.readfile(str(dxf_path))
     texts = {}
 
-    # === 1. MODELSPACE TEXT / MTEXT ===
-    msp = doc.modelspace()
-    for e in msp:
-        handle = e.dxf.handle
-        if e.dxftype() == 'TEXT':
-            texts[handle] = e.dxf.text
-        elif e.dxftype() == 'MTEXT':
-            texts[handle] = e.text
-        elif e.dxftype() == 'INSERT':
-            # INSERT 的属性
-            for attrib in e.attribs:  # ✅ 注意这里去掉括号
-                key = f"INSERT:{handle}:{attrib.dxf.handle}"
-                texts[key] = attrib.dxf.text
+    collect_texts(doc.modelspace(), texts)
 
-    # === 2. BLOCK 定义内部 TEXT / MTEXT ===
     for block in doc.blocks:
-        block_name = block.name
-        for e in block:
-            if e.dxftype() in ['TEXT', 'MTEXT']:
-                key = f"BLOCK:{block_name}:{e.dxf.handle}"
-                if e.dxftype() == 'TEXT':
-                    texts[key] = e.dxf.text
-                else:
-                    texts[key] = e.text
+        if block.name.startswith("*"):
+            continue
+        collect_texts(block, texts)
 
     return texts
+
 
 # =============================
 # 主程序

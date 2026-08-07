@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+
+# 运行时生成的中间产物
+source.dxf
+text_only.dxf
+translated.dxf
+texts.json
+result.json
+handle_map.json
+translation_cache.json
+texts_backup.json
