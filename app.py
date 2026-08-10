@@ -94,7 +94,7 @@ def translate_dxf(uploaded_file, source_lang, target_lang, model, custom_model, 
         for line in proc.stdout:
             line = line.rstrip("\n")
             tail.append(line)
-            if len(tail) > 12:
+            if len(tail) > 15:
                 tail.pop(0)
             m = STEP_RE.search(line)
             if m:
@@ -114,7 +114,17 @@ def translate_dxf(uploaded_file, source_lang, target_lang, model, custom_model, 
         yield gr.update(value=None), "❌ 翻译完成，但未生成 translated.dxf"
         return
 
-    yield str(OUTPUT_DXF), "✅ 翻译完成，可下载 translated.dxf"
+    # 解析 [SUMMARY] translated=N skipped=M，有保留原文时给出提示
+    skipped = 0
+    for ln in tail:
+        m = re.search(r"\[SUMMARY\] translated=(\d+) skipped=(\d+)", ln)
+        if m:
+            skipped = int(m.group(2))
+
+    if skipped:
+        yield str(OUTPUT_DXF), f"⚠️ 翻译完成（{skipped} 条未翻译，已保留原文），可下载 translated.dxf"
+    else:
+        yield str(OUTPUT_DXF), "✅ 翻译完成，可下载 translated.dxf"
 
 
 # =============================
