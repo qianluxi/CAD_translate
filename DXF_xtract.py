@@ -1,6 +1,7 @@
 import json
 import sys
 from pathlib import Path
+
 import ezdxf  # pip install ezdxf
 
 # Windows GBK 控制台打印 emoji 会触发 UnicodeEncodeError，这里兜底
@@ -37,7 +38,6 @@ def extract_texts_from_dxf(dxf_path):
     直接读取原始 DXF，提取：
     - MODELSPACE 的 TEXT / MTEXT / INSERT 属性
     - 真实 BLOCK 定义内部的 TEXT / MTEXT / INSERT 属性
-
     跳过 *Model_Space / *Paper_Space 等伪块，避免模型空间文本被重复提取。
     返回 {handle: 文本} 字典，handle 即原始 DXF 的 handle，回写时直接对应。
     """
@@ -62,7 +62,8 @@ if __name__ == "__main__":
         texts = extract_texts_from_dxf(DXF_FILE)
         with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
             json.dump(texts, f, ensure_ascii=False, indent=2)
-        print(f"✅ texts.json generated: {OUTPUT_JSON}")
-        print(f"Total texts extracted: {len(texts)}")
+        print(f"✓ texts.json generated: {OUTPUT_JSON}", flush=True)
+        print(f"Total texts extracted: {len(texts)}", flush=True)
     except Exception as e:
-        print(f"❌ Failed to extract texts: {e}")
+        print(f"✗ Failed to extract texts: {e}", flush=True)
+        sys.exit(1)
